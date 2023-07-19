@@ -152,7 +152,7 @@ const Content = () => {
             </div>
           </div>
 
-          <ul className="menu rounded-box max-h-screen flex-nowrap overflow-auto bg-base-100 px-0">
+          <ul className="menu rounded-box h-96 flex-nowrap overflow-auto bg-base-100 px-0">
             {renderTopics()}
           </ul>
           <div className="divider"></div>
