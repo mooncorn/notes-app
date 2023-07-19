@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  notes-app-db:
+    image: postgres:latest
+    container_name: notes-app-postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      PGDATA: /data/postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/data/postgres
+
+volumes:
+  postgres:
