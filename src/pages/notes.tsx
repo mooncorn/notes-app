@@ -86,7 +86,7 @@ const Content = () => {
 
   return (
     <>
-      <div className="mx-5 mt-5 grid grid-cols-4 gap-5">
+      <div className="mx-5 mt-5 grid gap-5 md:grid-cols-4">
         <div className="px-2">
           <input
             type="text"
@@ -152,7 +152,7 @@ const Content = () => {
             </div>
           </div>
 
-          <ul className="menu rounded-box h-96 flex-nowrap overflow-auto bg-base-100 px-0">
+          <ul className="menu rounded-box h-40 flex-nowrap overflow-auto bg-base-100 px-0 md:h-96">
             {renderTopics()}
           </ul>
           <div className="divider"></div>
