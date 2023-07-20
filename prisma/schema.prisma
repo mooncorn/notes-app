@@ -74,6 +74,7 @@ model Topic {
     user      User     @relation(fields: [userId], references: [id])
     userId    String
     notes     Note[]
+    deleted   Boolean  @default(false)
 }
 
 model Note {
@@ -84,4 +85,5 @@ model Note {
     content   String   @db.Text
     topic     Topic    @relation(fields: [topicId], references: [id])
     topicId   String
+    deleted   Boolean  @default(false)
 }

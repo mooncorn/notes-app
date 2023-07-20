@@ -1,8 +1,10 @@
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Header } from "~/components/Header";
+import { NoteCard } from "~/components/NoteCard";
+import { NoteEditor } from "~/components/NoteEditor";
 import { api, RouterOutputs } from "~/utils/api";
 
 type Topic = RouterOutputs["topic"]["getAll"][0];
@@ -40,6 +42,7 @@ const Content = () => {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
 
   const { data: sessionData } = useSession();
+
   const { data: topics, refetch: refetchTopics } = api.topic.getAll.useQuery(
     undefined,
     {
@@ -48,11 +51,28 @@ const Content = () => {
     }
   );
 
+  const { data: notes, refetch: refetchNotes } = api.note.getAll.useQuery(
+    {
+      topicId: selectedTopic?.id ?? "",
+    },
+    {
+      enabled: sessionData?.user !== undefined && selectedTopic !== null,
+    }
+  );
+
   const createTopicMutation = api.topic.create.useMutation({
     onSuccess: (topic) => {
       refetchTopics();
       setSelectedTopic(topic);
     },
+  });
+
+  const createNoteMutation = api.note.create.useMutation({
+    onSuccess: () => refetchNotes(),
+  });
+
+  const deleteNoteMutation = api.note.delete.useMutation({
+    onSuccess: () => refetchNotes(),
   });
 
   const createTopic = () => {
@@ -81,6 +101,17 @@ const Content = () => {
           {topic.title}
         </a>
       </li>
+    ));
+  };
+
+  const renderNotes = () => {
+    return notes?.map((note) => (
+      <div key={note.id} className="mt-5">
+        <NoteCard
+          note={note}
+          onDelete={() => deleteNoteMutation.mutate({ id: note.id })}
+        />
+      </div>
     ));
   };
 
@@ -157,32 +188,23 @@ const Content = () => {
           </ul>
           <div className="divider"></div>
         </div>
-        {JSON.stringify(selectedTopic)}
+        <div className="md:col-span-3">
+          {selectedTopic && (
+            <>
+              <NoteEditor
+                onSave={({ title, content }) => {
+                  createNoteMutation.mutate({
+                    title,
+                    content,
+                    topicId: selectedTopic?.id ?? "",
+                  });
+                }}
+              />
+              {renderNotes()}
+            </>
+          )}
+        </div>
       </div>
     </>
   );
 };
-
-// function AuthShowcase() {
-//   const { data: sessionData } = useSession();
-
-//   const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-//     undefined, // no input
-//     { enabled: sessionData?.user !== undefined }
-//   );
-
-//   return (
-//     <div className="flex flex-col items-center justify-center gap-4">
-//       <p className="text-center text-2xl text-white">
-//         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-//         {secretMessage && <span> - {secretMessage}</span>}
-//       </p>
-//       <button
-//         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-//         onClick={sessionData ? () => void signOut() : () => void signIn()}
-//       >
-//         {sessionData ? "Sign out" : "Sign in"}
-//       </button>
-//     </div>
-//   );
-// }
