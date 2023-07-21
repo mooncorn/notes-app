@@ -1,5 +1,5 @@
 import { RouterOutputs } from "~/utils/api";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { BsFillTrashFill } from "react-icons/bs";
 import { BiEditAlt } from "react-icons/bi";
@@ -15,6 +15,8 @@ export const NoteCard = ({
   onDelete: () => void;
   onEdit: () => void;
 }) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
   return (
     <div className="collapse bg-base-200">
       <input type="checkbox" />
@@ -33,8 +35,24 @@ export const NoteCard = ({
             size={18}
             onMouseOver={(e) => e.currentTarget.classList.add("text-error")}
             onMouseLeave={(e) => e.currentTarget.classList.remove("text-error")}
-            onClick={() => onDelete()}
+            onClick={() => dialogRef.current!.showModal()}
           />
+
+          <dialog ref={dialogRef} className="modal">
+            <form method="dialog" className="modal-box">
+              <h3 className="text-lg font-bold">Hello!</h3>
+              <p className="py-4">
+                Press ESC key or click the button below to close
+              </p>
+              <div className="modal-action">
+                {/* <!-- if there is a button in form, it will close the modal --> */}
+                <button className="btn btn-error" onClick={() => onDelete()}>
+                  Delete
+                </button>
+                <button className="btn">Close</button>
+              </div>
+            </form>
+          </dialog>
         </div>
       </div>
 
