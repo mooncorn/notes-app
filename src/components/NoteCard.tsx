@@ -1,37 +1,47 @@
 import { RouterOutputs } from "~/utils/api";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { BsFillTrashFill } from "react-icons/bs";
+import { BiEditAlt } from "react-icons/bi";
 
 type Note = RouterOutputs["note"]["getAll"][0];
 
 export const NoteCard = ({
   note,
   onDelete,
+  onEdit,
 }: {
   note: Note;
   onDelete: () => void;
+  onEdit: () => void;
 }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
-
   return (
-    <div className="card mt-5 bg-base-100 shadow-xl">
-      <div className="card-body m-0 p-3">
-        <div
-          className={`collapse-arrow collapse ${isExpanded && "collapse-open"}`}
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <div className="collapse-title text-xl font-bold">{note.title}</div>
-          <div className="collapse-content">
-            <article className="prose lg:prose-xl">
-              <ReactMarkdown>{note.content}</ReactMarkdown>
-            </article>
-          </div>
+    <div className="collapse bg-base-200">
+      <input type="checkbox" />
+      <div className="collapse-title flex justify-between font-medium">
+        <h3 className="text-xl">{note.title}</h3>
+        <div className="z-10 mt-1 flex justify-end gap-2">
+          <BiEditAlt
+            size={18}
+            onMouseOver={(e) => e.currentTarget.classList.add("text-success")}
+            onMouseLeave={(e) =>
+              e.currentTarget.classList.remove("text-success")
+            }
+            onClick={() => onEdit()}
+          />
+          <BsFillTrashFill
+            size={18}
+            onMouseOver={(e) => e.currentTarget.classList.add("text-error")}
+            onMouseLeave={(e) => e.currentTarget.classList.remove("text-error")}
+            onClick={() => onDelete()}
+          />
         </div>
-        <div className="card-actions justify-end">
-          <button className="btn btn-warning" onClick={onDelete}>
-            Delete
-          </button>
-        </div>
+      </div>
+
+      <div className="collapse-content">
+        <article className="prose lg:prose-xl">
+          <ReactMarkdown>{note.content}</ReactMarkdown>
+        </article>
       </div>
     </div>
   );

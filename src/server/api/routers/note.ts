@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { string, z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { checkTopicOwnership, getTopicById } from "./topic";
 import { PrismaClient } from "@prisma/client";
@@ -53,6 +53,21 @@ export const noteRouter = createTRPCRouter({
           title: input.title,
           content: input.content,
         },
+      });
+    }),
+
+  update: protectedProcedure
+    .input(z.object({ id: z.string(), title: z.string(), content: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await getNoteById(input.id, ctx.prisma);
+
+      // check that topic exists and was not deleted and belongs to this user
+      const topic = await getTopicById(note.topicId, ctx.prisma);
+      await checkTopicOwnership(topic, ctx.session.user.id);
+
+      return await ctx.prisma.note.update({
+        where: { id: input.id },
+        data: { title: input.title, content: input.content },
       });
     }),
 

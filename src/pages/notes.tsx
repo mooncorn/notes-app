@@ -8,6 +8,7 @@ import { NoteEditor } from "~/components/NoteEditor";
 import { api, RouterOutputs } from "~/utils/api";
 
 type Topic = RouterOutputs["topic"]["getAll"][0];
+type Note = RouterOutputs["note"]["getAll"][0];
 
 export default function Home() {
   const { data: sessionData } = useSession();
@@ -40,6 +41,10 @@ const Content = () => {
   );
   const [isTopicTitleInvalid, setIsTopicTitleInvalid] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
 
   const { data: sessionData } = useSession();
 
@@ -75,6 +80,10 @@ const Content = () => {
     onSuccess: () => refetchNotes(),
   });
 
+  const updateNoteMutation = api.note.update.useMutation({
+    onSuccess: () => refetchNotes(),
+  });
+
   const createTopic = () => {
     if (topicTitle.length === 0) {
       setIsTopicTitleInvalid(true);
@@ -96,6 +105,9 @@ const Content = () => {
           onClick={(e) => {
             e.preventDefault();
             setSelectedTopic(topic);
+            setSelectedNote(null);
+            setNoteContent("");
+            setNoteTitle("");
           }}
         >
           {topic.title}
@@ -110,6 +122,11 @@ const Content = () => {
         <NoteCard
           note={note}
           onDelete={() => deleteNoteMutation.mutate({ id: note.id })}
+          onEdit={() => {
+            setNoteContent(note.content);
+            setNoteTitle(note.title);
+            setSelectedNote(note);
+          }}
         />
       </div>
     ));
@@ -192,13 +209,27 @@ const Content = () => {
           {selectedTopic && (
             <>
               <NoteEditor
-                onSave={({ title, content }) => {
-                  createNoteMutation.mutate({
-                    title,
-                    content,
-                    topicId: selectedTopic?.id ?? "",
-                  });
+                title={noteTitle}
+                code={noteContent}
+                setTitle={setNoteTitle}
+                setCode={setNoteContent}
+                isEditing={selectedNote ? true : false}
+                onSave={({ title, content, isEditing }) => {
+                  if (isEditing) {
+                    updateNoteMutation.mutate({
+                      id: selectedNote!.id,
+                      title,
+                      content,
+                    });
+                  } else {
+                    createNoteMutation.mutate({
+                      title,
+                      content,
+                      topicId: selectedTopic.id,
+                    });
+                  }
                 }}
+                onCancel={() => setSelectedNote(null)}
               />
               {renderNotes()}
             </>
