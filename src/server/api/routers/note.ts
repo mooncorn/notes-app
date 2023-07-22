@@ -1,8 +1,11 @@
-import { string, z } from "zod";
+import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { checkTopicOwnership, getTopicById } from "./topic";
 import { PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
+import { RouterOutputs } from "~/utils/api";
+
+export type Note = RouterOutputs["note"]["getAll"][0];
 
 export const getNoteById = async (id: string, prisma: PrismaClient) => {
   const note = await prisma.note.findUnique({

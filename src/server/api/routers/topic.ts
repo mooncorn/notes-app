@@ -1,8 +1,10 @@
-import { PrismaClient, Topic } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
-import { getSession } from "next-auth/react";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { RouterOutputs } from "~/utils/api";
+
+export type Topic = RouterOutputs["topic"]["getAll"][0];
 
 export const getTopicById = async (id: string, prisma: PrismaClient) => {
   const topic = await prisma.topic.findUnique({

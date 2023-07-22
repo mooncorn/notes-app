@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { Header } from "~/components/Header";
 import { NoteCard } from "~/components/NoteCard";
 import { NoteEditor } from "~/components/NoteEditor";
-import { api, RouterOutputs } from "~/utils/api";
-
-type Topic = RouterOutputs["topic"]["getAll"][0];
-type Note = RouterOutputs["note"]["getAll"][0];
+import { StyledInput } from "~/components/StyledInput";
+import { Note } from "~/server/api/routers/note";
+import { Topic } from "~/server/api/routers/topic";
+import { api } from "~/utils/api";
 
 export default function Home() {
   const { data: sessionData } = useSession();
@@ -34,12 +34,10 @@ export default function Home() {
 }
 
 const Content = () => {
-  const [topicTitle, setTopicTitle] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchTopics, setSearchTopics] = useState<Topic[] | undefined>(
+  const [displayedTopics, setDisplayedTopics] = useState<Topic[] | undefined>(
     undefined
   );
-  const [isTopicTitleInvalid, setIsTopicTitleInvalid] = useState(false);
+
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
@@ -52,7 +50,7 @@ const Content = () => {
     undefined,
     {
       enabled: sessionData?.user !== undefined,
-      onSuccess: (data) => setSearchTopics(data),
+      onSuccess: (data) => setDisplayedTopics(data),
     }
   );
 
@@ -77,25 +75,25 @@ const Content = () => {
   });
 
   const deleteNoteMutation = api.note.delete.useMutation({
-    onSuccess: () => refetchNotes(),
+    onSuccess: (note) => {
+      refetchNotes();
+      if (note.id === selectedNote?.id) {
+        setSelectedNote(null);
+        setNoteTitle("");
+        setNoteContent("");
+      }
+    },
   });
 
   const updateNoteMutation = api.note.update.useMutation({
-    onSuccess: () => refetchNotes(),
+    onSuccess: () => {
+      refetchNotes();
+      setSelectedNote(null);
+    },
   });
 
-  const createTopic = () => {
-    if (topicTitle.length === 0) {
-      setIsTopicTitleInvalid(true);
-      return;
-    }
-
-    createTopicMutation.mutate({ title: topicTitle });
-    setTopicTitle("");
-  };
-
   const renderTopics = () => {
-    return searchTopics?.map((topic) => (
+    return displayedTopics?.map((topic) => (
       <li key={topic.id} className="">
         <a
           href="#"
@@ -136,67 +134,37 @@ const Content = () => {
     <>
       <div className="mx-5 mt-5 grid gap-5 md:grid-cols-4">
         <div className="px-2">
-          <input
+          <StyledInput
             type="text"
             placeholder="Create topic"
-            className={`input input-bordered input-sm w-full ${
-              isTopicTitleInvalid && "input-error"
-            }`}
-            value={topicTitle}
-            onChange={(e) => {
-              setTopicTitle(e.target.value);
-              setIsTopicTitleInvalid(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") createTopic();
-            }}
+            required={true}
+            requiredMessage="Topic title cannot be empty"
+            onEnter={(text) => createTopicMutation.mutate({ title: text })}
           />
 
-          {isTopicTitleInvalid && (
-            <label className="label label-text-alt text-error">
-              Topic title cannot be empty
-            </label>
-          )}
           <div className="divider"></div>
 
-          <input
+          <StyledInput
             type="text"
             placeholder="Search"
-            className="input input-bordered input-sm w-full"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setSearchTopics(
+            onChange={(text) => {
+              setDisplayedTopics(
                 topics?.filter((topic) =>
-                  topic.title
-                    .toLowerCase()
-                    .includes(e.target.value.toLowerCase())
+                  topic.title.toLowerCase().includes(text.toLowerCase())
                 )
               );
             }}
+            onClear={() => {
+              setDisplayedTopics(topics);
+            }}
           />
-
-          {searchTerm && (
-            <label className="label label-text-alt flex-row-reverse">
-              <a
-                href="#"
-                className="link"
-                onClick={() => {
-                  setSearchTopics(topics);
-                  setSearchTerm("");
-                }}
-              >
-                Clear
-              </a>
-            </label>
-          )}
 
           <div className="divider"></div>
 
           <div className="menu-title">
             <div className="flex gap-2">
               <span className="flex-1">Topics</span>
-              <span className="flex-none">{searchTopics?.length}</span>
+              <span className="flex-none">{displayedTopics?.length}</span>
             </div>
           </div>
 

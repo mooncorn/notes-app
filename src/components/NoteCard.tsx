@@ -1,24 +1,20 @@
-import { RouterOutputs } from "~/utils/api";
-import { useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { useRef } from "react";
 import { BsFillTrashFill } from "react-icons/bs";
 import { BiEditAlt } from "react-icons/bi";
+import { Note } from "~/server/api/routers/note";
+import ReactMarkdown from "react-markdown";
 
-type Note = RouterOutputs["note"]["getAll"][0];
-
-export const NoteCard = ({
-  note,
-  onDelete,
-  onEdit,
-}: {
+interface NoteCardProps {
   note: Note;
   onDelete: () => void;
   onEdit: () => void;
-}) => {
+}
+
+export const NoteCard = ({ note, onDelete, onEdit }: NoteCardProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   return (
-    <div className="collapse bg-base-200">
+    <div className="collapse bg-base-100 shadow-lg">
       <input type="checkbox" />
       <div className="collapse-title flex justify-between font-medium">
         <h3 className="text-xl">{note.title}</h3>
@@ -40,16 +36,14 @@ export const NoteCard = ({
 
           <dialog ref={dialogRef} className="modal">
             <form method="dialog" className="modal-box">
-              <h3 className="text-lg font-bold">Hello!</h3>
-              <p className="py-4">
-                Press ESC key or click the button below to close
-              </p>
+              <h3 className="text-lg font-bold">Delete note</h3>
+              <p className="py-4">Are you sure you want to delete this note?</p>
               <div className="modal-action">
-                {/* <!-- if there is a button in form, it will close the modal --> */}
                 <button className="btn btn-error" onClick={() => onDelete()}>
-                  Delete
+                  Yes
                 </button>
-                <button className="btn">Close</button>
+                {/* <!-- if there is a button in form, it will close the modal --> */}
+                <button className="btn">No</button>
               </div>
             </form>
           </dialog>

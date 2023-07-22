@@ -1,45 +1,42 @@
-import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
-import { RouterOutputs } from "~/utils/api";
+import { StyledInput } from "./StyledInput";
 
-type Note = RouterOutputs["note"]["getAll"][0];
-
-export const NoteEditor = ({
-  onSave,
-  onCancel,
-  // note,
-  title,
-  setTitle,
-  code,
-  setCode,
-  isEditing,
-}: {
+interface NoteEditorProps {
+  title: string;
+  code: string;
+  isEditing: boolean;
+  setTitle: (title: string) => void;
+  setCode: (code: string) => void;
   onSave: (node: {
     title: string;
     content: string;
     isEditing: boolean;
   }) => void;
   onCancel: () => void;
-  // note: Note | null;
-  title: string;
-  setTitle: (title: string) => void;
-  code: string;
-  setCode: (code: string) => void;
-  isEditing: boolean;
-}) => {
+}
+
+export const NoteEditor = ({
+  title,
+  code,
+  isEditing,
+  setTitle,
+  setCode,
+  onSave,
+  onCancel,
+}: NoteEditorProps) => {
   return (
-    <div className="card bg-base-200 shadow-md">
+    <div className="card bg-base-100 shadow-lg">
       <div className="card-body">
         <h2 className="card-title">
-          <input
+          <StyledInput
             type="text"
             placeholder="Note title"
-            className="input input-primary input-lg w-full font-bold"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            setValue={setTitle}
+            onChange={(text) => setTitle(text)}
           />
         </h2>
         <CodeMirror
