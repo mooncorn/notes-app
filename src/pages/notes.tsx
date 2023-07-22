@@ -211,7 +211,7 @@ const Content = () => {
           </ul>
           <div className="divider"></div>
         </div>
-        <div className="col-span-4 px-2 md:col-span-1">
+        <div className="col-span-4 px-2 md:col-span-3">
           {selectedTopic && (
             <>
               <NoteEditor

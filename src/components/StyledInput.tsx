@@ -29,7 +29,22 @@ export const StyledInput = ({
   const [input, setInput] = useState("");
 
   return (
-    <>
+    <form
+      className="w-full"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (onEnter) {
+          const textState = value ?? input;
+          if (textState.length === 0 && required) {
+            setIsEmpty(true);
+            true;
+          }
+
+          onEnter(textState);
+          setInput("");
+        }
+      }}
+    >
       <input
         type={type}
         placeholder={placeholder}
@@ -41,18 +56,6 @@ export const StyledInput = ({
           setValue ? setValue(e.target.value) : setInput(e.target.value);
           setIsEmpty(false);
           onChange(e.target.value);
-        }}
-        onKeyDown={(e) => {
-          if (onEnter && e.key === "Enter") {
-            const textState = value ?? input;
-            if (textState.length === 0 && required) {
-              setIsEmpty(true);
-              true;
-            }
-
-            onEnter(textState);
-            setInput("");
-          }
         }}
       />
 
@@ -76,6 +79,6 @@ export const StyledInput = ({
           </a>
         </label>
       )}
-    </>
+    </form>
   );
 };
