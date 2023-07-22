@@ -31,7 +31,7 @@ export const NoteCard = ({ note, onDelete, onEdit }: NoteCardProps) => {
             size={18}
             onMouseOver={(e) => e.currentTarget.classList.add("text-error")}
             onMouseLeave={(e) => e.currentTarget.classList.remove("text-error")}
-            onClick={() => dialogRef.current!.showModal()}
+            onClick={() => dialogRef.current?.showModal()}
           />
 
           <dialog ref={dialogRef} className="modal">

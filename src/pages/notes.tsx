@@ -1,7 +1,8 @@
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { BsFillTrashFill } from "react-icons/bs";
 import { Header } from "~/components/Header";
 import { NoteCard } from "~/components/NoteCard";
 import { NoteEditor } from "~/components/NoteEditor";
@@ -44,6 +45,8 @@ const Content = () => {
   const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
 
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
   const { data: sessionData } = useSession();
 
   const { data: topics, refetch: refetchTopics } = api.topic.getAll.useQuery(
@@ -67,6 +70,13 @@ const Content = () => {
     onSuccess: (topic) => {
       refetchTopics();
       setSelectedTopic(topic);
+    },
+  });
+
+  const deleteTopicMutation = api.topic.delete.useMutation({
+    onSuccess: () => {
+      refetchTopics();
+      setSelectedTopic(null);
     },
   });
 
@@ -97,7 +107,7 @@ const Content = () => {
       <li key={topic.id} className="">
         <a
           href="#"
-          className={`block max-w-full truncate ${
+          className={`flex max-w-full justify-between ${
             topic.id == selectedTopic?.id ? "active" : ""
           }`}
           onClick={(e) => {
@@ -108,7 +118,13 @@ const Content = () => {
             setNoteTitle("");
           }}
         >
-          {topic.title}
+          <span className="flex-1 truncate">{topic.title}</span>
+          <BsFillTrashFill
+            size={14}
+            onMouseOver={(e) => e.currentTarget.classList.add("text-error")}
+            onMouseLeave={(e) => e.currentTarget.classList.remove("text-error")}
+            onClick={() => dialogRef.current?.showModal()}
+          />
         </a>
       </li>
     ));
@@ -132,8 +148,8 @@ const Content = () => {
 
   return (
     <>
-      <div className="mx-5 mt-5 grid gap-5 md:grid-cols-4">
-        <div className="px-2">
+      <div className="mx-5 mt-5 grid grid-cols-4 gap-5">
+        <div className="col-span-4 px-2 md:col-span-1">
           <StyledInput
             type="text"
             placeholder="Create topic"
@@ -168,12 +184,34 @@ const Content = () => {
             </div>
           </div>
 
-          <ul className="menu rounded-box h-40 flex-nowrap overflow-auto bg-base-100 px-0 md:h-96">
+          <ul className="menu rounded-box h-40 flex-nowrap overflow-y-auto bg-base-100 px-0 ">
             {renderTopics()}
+
+            <dialog ref={dialogRef} className="modal">
+              <form method="dialog" className="modal-box">
+                <h3 className="text-lg font-bold">Delete topic</h3>
+                <p className="py-4">
+                  Are you sure you want to delete this topic? All related notes
+                  will be deleted as well.
+                </p>
+                <div className="modal-action">
+                  <button
+                    className="btn btn-error"
+                    onClick={() =>
+                      deleteTopicMutation.mutate({ id: selectedTopic!.id })
+                    }
+                  >
+                    Yes
+                  </button>
+                  {/* <!-- if there is a button in form, it will close the modal --> */}
+                  <button className="btn">No</button>
+                </div>
+              </form>
+            </dialog>
           </ul>
           <div className="divider"></div>
         </div>
-        <div className="md:col-span-3">
+        <div className="col-span-4 px-2 md:col-span-1">
           {selectedTopic && (
             <>
               <NoteEditor
