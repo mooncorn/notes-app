@@ -1,35 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { RouterOutputs } from "~/utils/api";
 
 export type Topic = RouterOutputs["topic"]["getAll"][0];
-
-export const getTopicById = async (id: string, prisma: PrismaClient) => {
-  const topic = await prisma.topic.findUnique({
-    where: { id, deleted: false },
-  });
-
-  if (!topic)
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Topic with this ID does not exist",
-    });
-
-  return topic;
-};
-
-export const checkTopicOwnership = async (
-  topic: Topic,
-  currentUserId: string
-) => {
-  if (topic.userId !== currentUserId)
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Cannot access other users topics",
-    });
-};
 
 export const topicRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -49,8 +22,13 @@ export const topicRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const topic = await getTopicById(input.id, ctx.prisma);
-      checkTopicOwnership(topic, ctx.session.user.id);
+      // delete topic
+      const topic = await ctx.prisma.topic.update({
+        where: { id: input.id, userId: ctx.session.user.id, deleted: false },
+        data: {
+          deleted: true,
+        },
+      });
 
       // delete all related notes
       await ctx.prisma.note.updateMany({
@@ -63,12 +41,6 @@ export const topicRouter = createTRPCRouter({
         },
       });
 
-      // delete topic
-      return await ctx.prisma.topic.update({
-        where: { id: input.id, userId: ctx.session.user.id },
-        data: {
-          deleted: true,
-        },
-      });
+      return topic;
     }),
 });

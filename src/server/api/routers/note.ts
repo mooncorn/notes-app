@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { checkTopicOwnership, getTopicById } from "./topic";
 import { PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { RouterOutputs } from "~/utils/api";
@@ -25,13 +24,13 @@ export const noteRouter = createTRPCRouter({
   getAll: protectedProcedure
     .input(z.object({ topicId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
-      // check that topic exists and was not deleted and belongs to this user
-      const topic = await getTopicById(input.topicId, ctx.prisma);
-      await checkTopicOwnership(topic, ctx.session.user.id);
-
       return await ctx.prisma.note.findMany({
         where: {
-          topicId: topic.id,
+          topic: {
+            userId: ctx.session.user.id,
+            deleted: false,
+          },
+          topicId: input.topicId,
           deleted: false,
         },
       });
@@ -46,9 +45,18 @@ export const noteRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // check that topic exists and was not deleted and belongs to this user
-      const topic = await getTopicById(input.topicId, ctx.prisma);
-      await checkTopicOwnership(topic, ctx.session.user.id);
+      const topic = await ctx.prisma.topic.findUnique({
+        where: {
+          id: input.topicId,
+          userId: ctx.session.user.id,
+        },
+      });
+
+      if (!topic)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Topic with this ID does not exist",
+        });
 
       return await ctx.prisma.note.create({
         data: {
@@ -62,14 +70,15 @@ export const noteRouter = createTRPCRouter({
   update: protectedProcedure
     .input(z.object({ id: z.string(), title: z.string(), content: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const note = await getNoteById(input.id, ctx.prisma);
-
-      // check that topic exists and was not deleted and belongs to this user
-      const topic = await getTopicById(note.topicId, ctx.prisma);
-      await checkTopicOwnership(topic, ctx.session.user.id);
-
       return await ctx.prisma.note.update({
-        where: { id: input.id },
+        where: {
+          topic: {
+            userId: ctx.session.user.id,
+            deleted: false,
+          },
+          id: input.id,
+          deleted: false,
+        },
         data: { title: input.title, content: input.content },
       });
     }),
@@ -77,15 +86,14 @@ export const noteRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const note = await getNoteById(input.id, ctx.prisma);
-
-      // check that topic exists and was not deleted and belongs to this user
-      const topic = await getTopicById(note.topicId, ctx.prisma);
-      await checkTopicOwnership(topic, ctx.session.user.id);
-
       return await ctx.prisma.note.update({
         where: {
+          topic: {
+            userId: ctx.session.user.id,
+            deleted: false,
+          },
           id: input.id,
+          deleted: false,
         },
         data: {
           deleted: true,
